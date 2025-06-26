@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Academic Grade Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 100%;
+      overflow-x: auto;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 900px;
+    }
+    th, td {
+      padding: 10px;
+      text-align: center;
+      border: 1px solid #ccc;
+    }
+    input[type="number"], input[type="text"] {
+      width: 100%;
+      padding: 5px;
+      box-sizing: border-box;
+    }
+    .result {
+      font-weight: bold;
+    }
+    .final { color: green; }
+    .equivalent { color: blue; }
+    .remarks { font-weight: bold; }
+    .remarks.pass { color: green; }
+    .remarks.fail { color: red; }
+    .letter { font-weight: bold; }
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 15px;
+      margin-right: 10px;
+      cursor: pointer;
+    }
+    @media print {
+      button { display: none; }
+      input { border: none; }
+    }
+    @media (max-width: 768px) {
+      table, th, td {
+        font-size: 14px;
+      }
+      input[type="number"], input[type="text"] {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h2>📘 Academic Grade Calculator</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Student Name</th>
+        <th>ID Number</th>
+        <th>Prelim</th>
+        <th>Midterm</th>
+        <th>Prefinal</th>
+        <th>Final</th>
+        <th>Final %</th>
+        <th>Equivalent</th>
+        <th>Remarks</th>
+        <th>Letter Grade</th>
+      </tr>
+    </thead>
+    <tbody id="studentTable"></tbody>
+  </table>
+
+  <button onclick="addRow()">Add Student</button>
+  <button onclick="calculateAll()">Calculate All</button>
+  <button onclick="exportCSV()">Export CSV</button>
+  <button onclick="exportExcel()">Export Excel</button>
+  <button onclick="window.print()">Print</button>
+
+  <!-- SheetJS for Excel Export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <script>
+    function getEquivalent(grade) {
+      const table = {
+        100: 1.0, 99: 1.1, 98: 1.2, 97: 1.3, 96: 1.4, 95: 1.5,
+        94: 1.6, 93: 1.7, 92: 1.8, 91: 1.9, 90: 2.0,
+        89: 2.1, 88: 2.2, 87: 2.3, 86: 2.4, 85: 2.5,
+        84: 2.6, 83: 2.7, 82: 2.8, 81: 2.9, 80: 3.0
+      };
+      const rounded = Math.round(grade);
+      return table[rounded] !== undefined ? table[rounded].toFixed(1) : "N/A";
+    }
+
+    function getLetterGrade(grade) {
+      if (grade >= 97) return "A+";
+      if (grade >= 93) return "A";
+      if (grade >= 90) return "A−";
+      if (grade >= 87) return "B+";
+      if (grade >= 83) return "B";
+      if (grade >= 80) return "B−";
+      if (grade >= 75) return "C";
+      return "F";
+    }
+
+    function calculateAll() {
+      const rows = document.querySelectorAll("#studentTable tr");
+      rows.forEach((row, index) => {
+        row.querySelector(".index").innerText = index + 1;
+        const prelim = parseFloat(row.querySelector(".prelim").value) || 0;
+        const midterm = parseFloat(row.querySelector(".midterm").value) || 0;
+        const prefinal = parseFloat(row.querySelector(".prefinal").value) || 0;
+        const final = parseFloat(row.querySelector(".final").value) || 0;
+
+        const finalPercentile = (prelim * 0.2) + (midterm * 0.2) + (prefinal * 0.2) + (final * 0.4);
+        const equivalent = getEquivalent(finalPercentile);
+        const remarks = finalPercentile >= 75 ? "PASSED" : "FAILED";
+        const letter = getLetterGrade(finalPercentile);
+
+        row.querySelector(".finalPercentile").innerText = finalPercentile.toFixed(2);
+        row.querySelector(".equivalent").innerText = equivalent;
+        const remarksCell = row.querySelector(".remarks");
+        remarksCell.innerText = remarks;
+        remarksCell.className = "result remarks " + (remarks === "PASSED" ? "pass" : "fail");
+        row.querySelector(".letter").innerText = letter;
+      });
+      saveToLocal();
+    }
+
+    function addRow(data = {}) {
+      const table = document.getElementById("studentTable");
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td class="index">#</td>
+        <td><input type="text" class="name" value="${data.name || ''}"></td>
+        <td><input type="text" class="id" value="${data.id || ''}"></td>
+        <td><input type="number" class="prelim" value="${data.prelim || ''}"></td>
+        <td><input type="number" class="midterm" value="${data.midterm || ''}"></td>
+        <td><input type="number" class="prefinal" value="${data.prefinal || ''}"></td>
+        <td><input type="number" class="final" value="${data.final || ''}"></td>
+        <td class="result finalPercentile">—</td>
+        <td class="result equivalent">—</td>
+        <td class="result remarks">—</td>
+        <td class="result letter">—</td>
+      `;
+      table.appendChild(row);
+      calculateAll();
+    }
+
+    function exportCSV() {
+      let csv = "Student #,Name,ID,Prelim,Midterm,Prefinal,Final,Final %,Equivalent,Remarks,Letter Grade\n";
+      const rows = document.querySelectorAll("#studentTable tr");
+
+      rows.forEach((row, index) => {
+        const values = [
+          index + 1,
+          row.querySelector(".name").value || "",
+          row.querySelector(".id").value || "",
+          row.querySelector(".prelim").value || 0,
+          row.querySelector(".midterm").value || 0,
+          row.querySelector(".prefinal").value || 0,
+          row.querySelector(".final").value || 0,
+          row.querySelector(".finalPercentile").innerText,
+          row.querySelector(".equivalent").innerText,
+          row.querySelector(".remarks").innerText,
+          row.querySelector(".letter").innerText
+        ];
+        csv += values.join(",") + "\n";
+      });
+
+      const blob = new Blob([csv], { type: "text/csv" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "academic_grades.csv";
+      link.click();
+    }
+
+    function exportExcel() {
+      const data = [["Student #", "Name", "ID", "Prelim", "Midterm", "Prefinal", "Final", "Final %", "Equivalent", "Remarks", "Letter Grade"]];
+      const rows = document.querySelectorAll("#studentTable tr");
+
+      rows.forEach((row, index) => {
+        data.push([
+          index + 1,
+          row.querySelector(".name").value || "",
+          row.querySelector(".id").value || "",
+          row.querySelector(".prelim").value || "",
+          row.querySelector(".midterm").value || "",
+          row.querySelector(".prefinal").value || "",
+          row.querySelector(".final").value || "",
+          row.querySelector(".finalPercentile").innerText,
+          row.querySelector(".equivalent").innerText,
+          row.querySelector(".remarks").innerText,
+          row.querySelector(".letter").innerText
+        ]);
+      });
+
+      const worksheet = XLSX.utils.aoa_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Grades");
+      XLSX.writeFile(workbook, "academic_grades.xlsx");
+    }
+
+    function saveToLocal() {
+      const rows = document.querySelectorAll("#studentTable tr");
+      const data = [];
+
+      rows.forEach(row => {
+        data.push({
+          name: row.querySelector(".name").value,
+          id: row.querySelector(".id").value,
+          prelim: row.querySelector(".prelim").value,
+          midterm: row.querySelector(".midterm").value,
+          prefinal: row.querySelector(".prefinal").value,
+          final: row.querySelector(".final").value
+        });
+      });
+
+      localStorage.setItem("gradeTable", JSON.stringify(data));
+    }
+
+    function loadFromLocal() {
+      const data = JSON.parse(localStorage.getItem("gradeTable") || "[]");
+      data.forEach(entry => addRow(entry));
+    }
+
+    window.onload = function () {
+      loadFromLocal();
+      if (document.querySelectorAll("#studentTable tr").length === 0) addRow();
+    };
+  </script>
+
+</body>
+</html>
