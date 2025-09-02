@@ -1,0 +1,1742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radiology Lab Manager v10</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiUmFkaW9sb2d5IExhYiBNYW5hZ2VyIiwic2hvcnRfbmFtZSI6IlJhZExhYk1nciIsInN0YXJ0X3VybCI6Ii8iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjMWU0MDc2IiwidGhlbWVfY29sb3IiOiIjMzMzOGZmIiwiaWNvbnMiOlt7InNyYyI6ImRhdGE6aW1hZ2Uvc3ZnK3htbDtiYXNlNjQsUEhOMlp5QjNhV1IwYUQwaU1qUWlJR2hsYVdkb2REMGlNalFpSUhabGNuTnBiMjQ5SWpFdU1TSWdlRzFzYm5NOUltaDBkSEE2THk5M2QzY3Vkek11YjNKbkx6SXdNREF2YzNabklqNDhjbVZqZENCM2FXUjBhRDBpTWpRaUlHaGxhV2RvZEQwaU1qUWlJR1pwYkd3OUlpTXpNek00Wm1ZaUx6NDhMM04yWno0PSIsInNpemVzIjoiMjR4MjQiLCJ0eXBlIjoiaW1hZ2Uvc3ZnK3htbCJ9XX0=">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e40af 0%, #3338ff 50%, #1e3a8a 100%);
+        }
+        
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .workflow-step {
+            transition: all 0.3s ease;
+        }
+        
+        .workflow-step.completed {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-color: #059669;
+            color: white;
+        }
+        
+        .workflow-step:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .notification {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .medical-icon {
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2563eb, #1e40af);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+        
+        .dark .workflow-step.completed {
+            background: linear-gradient(135deg, #059669, #047857);
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .status-in-progress {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-completed {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        
+        .dark .status-in-progress {
+            background-color: #451a03;
+            color: #fbbf24;
+        }
+        
+        .dark .status-completed {
+            background-color: #064e3b;
+            color: #34d399;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <!-- Login Screen -->
+    <div id="loginScreen" class="min-h-screen gradient-bg flex items-center justify-center p-4">
+        <div class="glass-effect rounded-2xl p-8 w-full max-w-md shadow-2xl">
+            <div class="text-center mb-8">
+                <div class="medical-icon mb-4">
+                    <svg class="w-16 h-16 mx-auto text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-8 2h2v4h4v2h-4v4h-2v-4H7v-2h4V5z"/>
+                    </svg>
+                </div>
+                <h1 class="text-3xl font-bold text-white mb-2">Radiology Lab Manager</h1>
+                <p id="teamName" class="text-blue-100 text-lg font-medium">Radiotechnologues Sans Frontières</p>
+                <p class="text-blue-200 text-sm mt-1">Professional Medical Imaging Management</p>
+            </div>
+            
+            <form id="loginForm" class="space-y-6">
+                <div>
+                    <label class="block text-white text-sm font-medium mb-2">Username</label>
+                    <input type="text" id="username" class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50" placeholder="Enter username" required>
+                </div>
+                
+                <div>
+                    <label class="block text-white text-sm font-medium mb-2">Password</label>
+                    <input type="password" id="password" class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50" placeholder="Enter password" required>
+                </div>
+                
+                <button type="submit" class="w-full bg-white text-blue-600 py-3 px-6 rounded-lg font-semibold hover:bg-blue-50 transition-colors duration-200 shadow-lg">
+                    Sign In
+                </button>
+            </form>
+            
+            <div class="text-center mt-6">
+                <p class="text-blue-200 text-xs">© 2024 lrfpjr25. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="mainApp" class="hidden min-h-screen">
+        <!-- Header -->
+        <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center space-x-4">
+                        <svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-8 2h2v4h4v2h-4v4h-2v-4H7v-2h4V5z"/>
+                        </svg>
+                        <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Radiology Lab Manager</h1>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <button id="themeToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                            <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM7.758 17.303a.75.75 0 00-1.061-1.06l-1.591 1.59a.75.75 0 001.06 1.061l1.591-1.59zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zM6.697 7.757a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 00-1.061 1.06l1.59 1.591z"/>
+                            </svg>
+                        </button>
+                        
+                        <span id="currentUser" class="text-sm text-gray-600 dark:text-gray-300"></span>
+                        
+                        <button id="logoutBtn" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex space-x-8">
+                    <button class="nav-btn active px-3 py-4 text-sm font-medium border-b-2 border-blue-500 text-blue-600" data-section="patients">
+                        👥 Patients
+                    </button>
+                    <button class="nav-btn px-3 py-4 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" data-section="images">
+                        🖼️ Images
+                    </button>
+                    <button class="nav-btn px-3 py-4 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" data-section="staff">
+                        👨‍⚕️ Staff
+                    </button>
+                    <button class="nav-btn px-3 py-4 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" data-section="activity">
+                        📋 Activity
+                    </button>
+                    <button class="nav-btn px-3 py-4 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" data-section="settings">
+                        ⚙️ Settings
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Patients Section -->
+            <div id="patientsSection" class="section fade-in">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Patient Registry</h2>
+                    <div class="flex space-x-3">
+                        <button id="importPatientsBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                            📥 Import
+                        </button>
+                        <button id="exportPatientsBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            📤 Export
+                        </button>
+                        <button id="addPatientBtn" class="btn-primary px-4 py-2 text-white rounded-lg">
+                            ➕ Add Patient
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-700">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Patient</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Clinical Presentation</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Workflow Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="patientsTableBody" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Images Section -->
+            <div id="imagesSection" class="section hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Medical Images</h2>
+                    <button id="uploadImageBtn" class="btn-primary px-4 py-2 text-white rounded-lg">
+                        📁 Upload Images
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="imagesGrid">
+                </div>
+            </div>
+
+            <!-- Staff Section -->
+            <div id="staffSection" class="section hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Staff Management</h2>
+                    <button id="addStaffBtn" class="btn-primary px-4 py-2 text-white rounded-lg">
+                        👨‍⚕️ Add Staff
+                    </button>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-700">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Role</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Email</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="staffTableBody" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Section -->
+            <div id="activitySection" class="section hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Activity Log</h2>
+                    <button id="clearActivityBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                        🗑️ Clear Log
+                    </button>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
+                    <div class="max-h-96 overflow-y-auto p-6">
+                        <div id="activityLog" class="space-y-3">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Section -->
+            <div id="settingsSection" class="section hidden">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Settings</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Lab Configuration</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Lab Name</label>
+                                <input type="text" id="labNameInput" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" placeholder="Enter lab name">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Team Name</label>
+                                <input type="text" id="teamNameInput" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" placeholder="Enter team name">
+                            </div>
+                            <button id="saveSettingsBtn" class="btn-primary px-4 py-2 text-white rounded-lg">
+                                💾 Save Settings
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">User Management</h3>
+                        <div class="space-y-4" id="userManagementSection">
+                            <div id="adminOnlyMessage" class="hidden text-center py-8">
+                                <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-4a2 2 0 00-2-2H6a2 2 0 00-2 2v4a2 2 0 002 2zM12 9V7a4 4 0 00-8 0v2"></path>
+                                </svg>
+                                <p class="text-gray-500 dark:text-gray-400">Only system administrators can manage users</p>
+                            </div>
+                            <button id="addUserBtn" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                                👤 Add User
+                            </button>
+                            <div class="max-h-48 overflow-y-auto">
+                                <div id="usersList" class="space-y-2">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Data Management</h3>
+                        <div class="space-y-4">
+                            <button id="exportAllBtn" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                📤 Export All Data
+                            </button>
+                            <button id="importAllBtn" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                                📥 Import Data
+                            </button>
+                            <button id="backupBtn" class="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                                💾 Create Backup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Patient Modal -->
+    <div id="patientModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 id="patientModalTitle" class="text-xl font-semibold text-gray-900 dark:text-white">Add Patient</h3>
+                    <button id="closePatientModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <form id="patientForm" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Patient Name *</label>
+                            <input type="text" id="patientName" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Patient ID *</label>
+                            <input type="text" id="patientId" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" required>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Clinical Presentation</label>
+                        <textarea id="clinicalPresentation" rows="3" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" placeholder="Describe clinical symptoms and presentation"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">Workflow Progress</label>
+                        <div class="space-y-3">
+                            <div class="workflow-step flex items-center p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer" data-step="imaging">
+                                <input type="checkbox" id="imagingCompleted" class="mr-3 h-5 w-5 text-blue-600 rounded">
+                                <div class="flex items-center">
+                                    <span class="text-2xl mr-3">🖼️</span>
+                                    <div>
+                                        <div class="font-medium text-gray-900 dark:text-white">Medical Imaging Completed</div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">X-Ray, CT, MRI, or other imaging studies</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="workflow-step flex items-center p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer" data-step="analysis">
+                                <input type="checkbox" id="analysisSubmitted" class="mr-3 h-5 w-5 text-blue-600 rounded">
+                                <div class="flex items-center">
+                                    <span class="text-2xl mr-3">📤</span>
+                                    <div>
+                                        <div class="font-medium text-gray-900 dark:text-white">Images Sent for Analysis</div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">Submitted to radiologist for interpretation</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="workflow-step flex items-center p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer" data-step="report">
+                                <input type="checkbox" id="reportReceived" class="mr-3 h-5 w-5 text-blue-600 rounded">
+                                <div class="flex items-center">
+                                    <span class="text-2xl mr-3">📥</span>
+                                    <div>
+                                        <div class="font-medium text-gray-900 dark:text-white">Radiology Report Received</div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">Final report available for review</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-600">
+                        <button type="button" id="cancelPatientBtn" class="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn-primary px-4 py-2 text-white rounded-lg">
+                            Save Patient
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Staff Modal -->
+    <div id="staffModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 id="staffModalTitle" class="text-xl font-semibold text-gray-900 dark:text-white">Add Staff Member</h3>
+                    <button id="closeStaffModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <form id="staffForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Name *</label>
+                        <input type="text" id="staffName" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" required>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Role *</label>
+                        <select id="staffRole" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" required>
+                            <option value="">Select Role</option>
+                            <option value="admin">Administrator</option>
+                            <option value="radiologist">Radiologist</option>
+                            <option value="technologist">Technologist</option>
+                            <option value="staff">Staff</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
+                        <input type="email" id="staffEmail" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                    </div>
+
+                    <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-600">
+                        <button type="button" id="cancelStaffBtn" class="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn-primary px-4 py-2 text-white rounded-lg">
+                            Save Staff
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Modal -->
+    <div id="userModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 id="userModalTitle" class="text-xl font-semibold text-gray-900 dark:text-white">Add User</h3>
+                    <button id="closeUserModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <form id="userForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Username *</label>
+                        <input type="text" id="userUsername" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" required>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Password *</label>
+                        <input type="password" id="userPassword" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" required>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Role *</label>
+                        <select id="userRole" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" required>
+                            <option value="">Select Role</option>
+                            <option value="admin">Administrator</option>
+                            <option value="radiologist">Radiologist</option>
+                            <option value="technologist">Technologist</option>
+                            <option value="staff">Staff</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Full Name</label>
+                        <input type="text" id="userFullName" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                    </div>
+
+                    <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-600">
+                        <button type="button" id="cancelUserBtn" class="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn-primary px-4 py-2 text-white rounded-lg">
+                            Save User
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notifications" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <!-- Hidden File Inputs -->
+    <input type="file" id="imageUpload" multiple accept="image/*,.dcm" class="hidden">
+    <input type="file" id="importFile" accept=".json,.csv" class="hidden">
+    <input type="file" id="importAllFile" accept=".json" class="hidden">
+    <input type="file" id="importPatientsFile" accept=".json,.csv" class="hidden">
+
+    <script>
+        // Application State
+        let currentUser = null;
+        let currentTheme = localStorage.getItem('theme') || 'light';
+        let patients = [];
+        let staff = [];
+        let images = [];
+        let activities = [];
+        let users = [];
+        let settings = {
+            labName: 'Radiology Laboratory',
+            teamName: 'Radiotechnologues Sans Frontières'
+        };
+        let editingPatientId = null;
+        let editingStaffId = null;
+        let editingUserId = null;
+
+        // Encryption key (in production, this should be more secure)
+        const ENCRYPTION_KEY = 'RadiologyLabManager2024';
+
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        function initializeApp() {
+            loadData();
+            setupEventListeners();
+            applyTheme();
+            updateTeamNameDisplay();
+        }
+
+        // Data Management with Cross-Version Compatibility
+        function loadData() {
+            try {
+                // Load with backward compatibility
+                const encryptedData = localStorage.getItem('radiologyLabData');
+                if (encryptedData) {
+                    const decryptedData = CryptoJS.AES.decrypt(encryptedData, ENCRYPTION_KEY).toString(CryptoJS.enc.Utf8);
+                    const data = JSON.parse(decryptedData);
+                    
+                    // Migrate old data format to new format
+                    patients = migratePatientData(data.patients || []);
+                    staff = data.staff || [];
+                    images = data.images || [];
+                    activities = data.activities || [];
+                    users = data.users || [];
+                    settings = { ...settings, ...(data.settings || {}) };
+                } else {
+                    // Check for legacy data formats
+                    loadLegacyData();
+                }
+                
+                // Initialize default users if none exist
+                if (users.length === 0) {
+                    initializeDefaultUsers();
+                }
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showNotification('Error loading data. Starting fresh.', 'error');
+                initializeDefaultData();
+            }
+        }
+
+        function initializeDefaultUsers() {
+            users = [
+                {
+                    id: generateId(),
+                    username: 'leo',
+                    password: CryptoJS.SHA256('rey').toString(),
+                    role: 'admin',
+                    fullName: 'Leo Administrator',
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: generateId(),
+                    username: 'devleo',
+                    password: CryptoJS.SHA256('rey098').toString(),
+                    role: 'admin',
+                    fullName: 'Dev Leo Administrator',
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: generateId(),
+                    username: 'sheila',
+                    password: CryptoJS.SHA256('sheila123').toString(),
+                    role: 'staff',
+                    fullName: 'Sheila Staff',
+                    createdAt: new Date().toISOString()
+                }
+            ];
+            saveData();
+        }
+
+        function migratePatientData(oldPatients) {
+            return oldPatients.map(patient => {
+                // Ensure all patients have workflow status (backward compatibility)
+                if (!patient.workflow) {
+                    patient.workflow = {
+                        imaging: false,
+                        analysis: false,
+                        report: false
+                    };
+                }
+                
+                // Migrate old status field to workflow if exists
+                if (patient.status && !patient.workflow.imaging) {
+                    if (patient.status.includes('completed') || patient.status.includes('done')) {
+                        patient.workflow.imaging = true;
+                        patient.workflow.analysis = true;
+                        patient.workflow.report = true;
+                    }
+                }
+                
+                return patient;
+            });
+        }
+
+        function loadLegacyData() {
+            // Try to load from older versions
+            const legacyPatients = localStorage.getItem('patients');
+            const legacyStaff = localStorage.getItem('staff');
+            
+            if (legacyPatients) {
+                try {
+                    patients = migratePatientData(JSON.parse(legacyPatients));
+                } catch (e) {
+                    patients = [];
+                }
+            }
+            
+            if (legacyStaff) {
+                try {
+                    staff = JSON.parse(legacyStaff);
+                } catch (e) {
+                    staff = [];
+                }
+            }
+            
+            // Save in new format
+            saveData();
+        }
+
+        function initializeDefaultData() {
+            patients = [];
+            staff = [
+                {
+                    id: generateId(),
+                    name: 'Dr. Sarah Johnson',
+                    role: 'radiologist',
+                    email: 'sarah.johnson@radlab.com',
+                    status: 'active'
+                }
+            ];
+            images = [];
+            activities = [];
+            initializeDefaultUsers();
+            saveData();
+        }
+
+        function saveData() {
+            try {
+                const data = {
+                    patients,
+                    staff,
+                    images,
+                    activities,
+                    users,
+                    settings,
+                    version: '10.0',
+                    timestamp: new Date().toISOString()
+                };
+                
+                const encryptedData = CryptoJS.AES.encrypt(JSON.stringify(data), ENCRYPTION_KEY).toString();
+                localStorage.setItem('radiologyLabData', encryptedData);
+            } catch (error) {
+                console.error('Error saving data:', error);
+                showNotification('Error saving data', 'error');
+            }
+        }
+
+        // Event Listeners
+        function setupEventListeners() {
+            // Login
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            
+            // Navigation
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => switchSection(e.target.dataset.section));
+            });
+            
+            // Theme toggle
+            document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+            
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            
+            // Patient management
+            document.getElementById('addPatientBtn').addEventListener('click', () => openPatientModal());
+            document.getElementById('patientForm').addEventListener('submit', handlePatientSubmit);
+            document.getElementById('closePatientModal').addEventListener('click', closePatientModal);
+            document.getElementById('cancelPatientBtn').addEventListener('click', closePatientModal);
+            
+            // Workflow step interactions
+            document.querySelectorAll('.workflow-step').forEach(step => {
+                step.addEventListener('click', (e) => {
+                    if (e.target.type !== 'checkbox') {
+                        const checkbox = step.querySelector('input[type="checkbox"]');
+                        checkbox.checked = !checkbox.checked;
+                        updateWorkflowStepAppearance(step, checkbox.checked);
+                    } else {
+                        updateWorkflowStepAppearance(step, e.target.checked);
+                    }
+                });
+            });
+            
+            // Staff management
+            document.getElementById('addStaffBtn').addEventListener('click', () => openStaffModal());
+            document.getElementById('staffForm').addEventListener('submit', handleStaffSubmit);
+            document.getElementById('closeStaffModal').addEventListener('click', closeStaffModal);
+            document.getElementById('cancelStaffBtn').addEventListener('click', closeStaffModal);
+            
+            // User management
+            document.getElementById('addUserBtn').addEventListener('click', () => openUserModal());
+            document.getElementById('userForm').addEventListener('submit', handleUserSubmit);
+            document.getElementById('closeUserModal').addEventListener('click', closeUserModal);
+            document.getElementById('cancelUserBtn').addEventListener('click', closeUserModal);
+            
+            // File uploads and imports
+            document.getElementById('uploadImageBtn').addEventListener('click', () => document.getElementById('imageUpload').click());
+            document.getElementById('imageUpload').addEventListener('change', handleImageUpload);
+            
+            document.getElementById('importPatientsBtn').addEventListener('click', () => document.getElementById('importPatientsFile').click());
+            document.getElementById('importPatientsFile').addEventListener('change', handlePatientsImport);
+            
+            document.getElementById('exportPatientsBtn').addEventListener('click', exportPatients);
+            
+            document.getElementById('importAllBtn').addEventListener('click', () => document.getElementById('importAllFile').click());
+            document.getElementById('importAllFile').addEventListener('change', handleDataImport);
+            
+            document.getElementById('exportAllBtn').addEventListener('click', exportAllData);
+            document.getElementById('backupBtn').addEventListener('click', createBackup);
+            
+            // Settings
+            document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
+            
+            // Activity log
+            document.getElementById('clearActivityBtn').addEventListener('click', clearActivityLog);
+        }
+
+        function updateWorkflowStepAppearance(step, isCompleted) {
+            if (isCompleted) {
+                step.classList.add('completed');
+            } else {
+                step.classList.remove('completed');
+            }
+        }
+
+        // Authentication
+        function handleLogin(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const hashedPassword = CryptoJS.SHA256(password).toString();
+            
+            // Find user with matching credentials
+            const user = users.find(u => u.username === username && u.password === hashedPassword);
+            
+            if (user) {
+                currentUser = {
+                    id: user.id,
+                    username: user.username,
+                    role: user.role,
+                    fullName: user.fullName,
+                    loginTime: new Date().toISOString()
+                };
+                
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                document.getElementById('currentUser').textContent = `${user.fullName || username} (${user.role})`;
+                
+                logActivity(`User ${username} logged in as ${user.role}`);
+                renderCurrentSection();
+                
+                showNotification(`Welcome back, ${user.fullName || username}!`, 'success');
+            } else {
+                showNotification('Invalid username or password', 'error');
+            }
+        }
+
+        function logout() {
+            if (currentUser) {
+                logActivity(`User ${currentUser.username} logged out`);
+            }
+            
+            currentUser = null;
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('loginForm').reset();
+            
+            showNotification('Logged out successfully', 'info');
+        }
+
+        // Theme Management
+        function toggleTheme() {
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            applyTheme();
+            localStorage.setItem('theme', currentTheme);
+        }
+
+        function applyTheme() {
+            if (currentTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        function updateTeamNameDisplay() {
+            document.getElementById('teamName').textContent = settings.teamName;
+        }
+
+        // Navigation
+        function switchSection(section) {
+            // Update navigation
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active', 'border-blue-500', 'text-blue-600');
+                btn.classList.add('text-gray-500', 'hover:text-gray-700', 'dark:text-gray-400', 'dark:hover:text-gray-300');
+            });
+            
+            document.querySelector(`[data-section="${section}"]`).classList.add('active', 'border-blue-500', 'text-blue-600');
+            document.querySelector(`[data-section="${section}"]`).classList.remove('text-gray-500', 'hover:text-gray-700', 'dark:text-gray-400', 'dark:hover:text-gray-300');
+            
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(sec => sec.classList.add('hidden'));
+            
+            // Show selected section
+            document.getElementById(`${section}Section`).classList.remove('hidden');
+            
+            // Render section content
+            renderSection(section);
+        }
+
+        function renderCurrentSection() {
+            const activeBtn = document.querySelector('.nav-btn.active');
+            if (activeBtn) {
+                renderSection(activeBtn.dataset.section);
+            } else {
+                renderSection('patients');
+            }
+        }
+
+        function renderSection(section) {
+            switch (section) {
+                case 'patients':
+                    renderPatients();
+                    break;
+                case 'images':
+                    renderImages();
+                    break;
+                case 'staff':
+                    renderStaff();
+                    break;
+                case 'activity':
+                    renderActivity();
+                    break;
+                case 'settings':
+                    renderSettings();
+                    break;
+            }
+        }
+
+        // Patient Management
+        function renderPatients() {
+            const tbody = document.getElementById('patientsTableBody');
+            tbody.innerHTML = '';
+            
+            patients.forEach(patient => {
+                const workflowStatus = getWorkflowStatus(patient.workflow);
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50 dark:hover:bg-gray-700';
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900 dark:text-white">${patient.name}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900 dark:text-white">${patient.id}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-gray-900 dark:text-white max-w-xs truncate">${patient.clinicalPresentation || 'Not specified'}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="status-badge ${workflowStatus.completed ? 'status-completed' : 'status-in-progress'}">
+                            ${workflowStatus.completed ? '✅' : '⏳'} ${workflowStatus.text}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button class="edit-patient-btn text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3" data-patient-id="${patient.id}">
+                            Edit
+                        </button>
+                        <button class="delete-patient-btn text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" data-patient-id="${patient.id}">
+                            Delete
+                        </button>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+            
+            // Add event listeners for edit and delete buttons
+            document.querySelectorAll('.edit-patient-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const patientId = e.target.getAttribute('data-patient-id');
+                    editPatient(patientId);
+                });
+            });
+            
+            document.querySelectorAll('.delete-patient-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const patientId = e.target.getAttribute('data-patient-id');
+                    deletePatient(patientId);
+                });
+            });
+        }
+
+        function getWorkflowStatus(workflow) {
+            if (!workflow) {
+                return { completed: false, text: 'Not started' };
+            }
+            
+            const steps = [workflow.imaging, workflow.analysis, workflow.report];
+            const completedSteps = steps.filter(step => step).length;
+            
+            if (completedSteps === 3) {
+                return { completed: true, text: 'Complete' };
+            } else if (completedSteps === 0) {
+                return { completed: false, text: 'Not started' };
+            } else {
+                return { completed: false, text: `${completedSteps}/3 steps` };
+            }
+        }
+
+        function openPatientModal(patientId = null) {
+            editingPatientId = patientId;
+            const modal = document.getElementById('patientModal');
+            const title = document.getElementById('patientModalTitle');
+            const form = document.getElementById('patientForm');
+            
+            if (patientId) {
+                const patient = patients.find(p => p.id === patientId);
+                title.textContent = 'Edit Patient';
+                
+                document.getElementById('patientName').value = patient.name;
+                document.getElementById('patientId').value = patient.id;
+                document.getElementById('clinicalPresentation').value = patient.clinicalPresentation || '';
+                
+                // Set workflow checkboxes
+                document.getElementById('imagingCompleted').checked = patient.workflow?.imaging || false;
+                document.getElementById('analysisSubmitted').checked = patient.workflow?.analysis || false;
+                document.getElementById('reportReceived').checked = patient.workflow?.report || false;
+                
+                // Update workflow step appearances
+                updateWorkflowStepAppearance(document.querySelector('[data-step="imaging"]'), patient.workflow?.imaging || false);
+                updateWorkflowStepAppearance(document.querySelector('[data-step="analysis"]'), patient.workflow?.analysis || false);
+                updateWorkflowStepAppearance(document.querySelector('[data-step="report"]'), patient.workflow?.report || false);
+            } else {
+                title.textContent = 'Add Patient';
+                form.reset();
+                
+                // Reset workflow step appearances
+                document.querySelectorAll('.workflow-step').forEach(step => {
+                    step.classList.remove('completed');
+                });
+            }
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closePatientModal() {
+            document.getElementById('patientModal').classList.add('hidden');
+            document.getElementById('patientModal').classList.remove('flex');
+            editingPatientId = null;
+        }
+
+        function handlePatientSubmit(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('patientName').value;
+            const id = document.getElementById('patientId').value;
+            const clinicalPresentation = document.getElementById('clinicalPresentation').value;
+            
+            const workflow = {
+                imaging: document.getElementById('imagingCompleted').checked,
+                analysis: document.getElementById('analysisSubmitted').checked,
+                report: document.getElementById('reportReceived').checked
+            };
+            
+            if (editingPatientId) {
+                const patientIndex = patients.findIndex(p => p.id === editingPatientId);
+                patients[patientIndex] = {
+                    ...patients[patientIndex],
+                    name,
+                    id,
+                    clinicalPresentation,
+                    workflow,
+                    updatedAt: new Date().toISOString()
+                };
+                
+                logActivity(`Patient ${name} (${id}) updated`);
+                showNotification('Patient updated successfully', 'success');
+            } else {
+                const newPatient = {
+                    id: generateId(),
+                    name,
+                    id: id,
+                    clinicalPresentation,
+                    workflow,
+                    createdAt: new Date().toISOString()
+                };
+                
+                patients.push(newPatient);
+                logActivity(`New patient ${name} (${id}) added`);
+                showNotification('Patient added successfully', 'success');
+            }
+            
+            saveData();
+            renderPatients();
+            closePatientModal();
+        }
+
+        function editPatient(patientId) {
+            openPatientModal(patientId);
+        }
+
+        function deletePatient(patientId) {
+            if (confirm('Are you sure you want to delete this patient?')) {
+                const patient = patients.find(p => p.id === patientId);
+                patients = patients.filter(p => p.id !== patientId);
+                
+                logActivity(`Patient ${patient.name} (${patient.id}) deleted`);
+                showNotification('Patient deleted successfully', 'success');
+                
+                saveData();
+                renderPatients();
+            }
+        }
+
+        // Staff Management
+        function renderStaff() {
+            const tbody = document.getElementById('staffTableBody');
+            tbody.innerHTML = '';
+            
+            staff.forEach(member => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50 dark:hover:bg-gray-700';
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900 dark:text-white">${member.name}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                            ${member.role}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900 dark:text-white">${member.email || 'Not provided'}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${member.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}">
+                            ${member.status || 'active'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="editStaff('${member.id}')" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3">
+                            Edit
+                        </button>
+                        <button onclick="deleteStaff('${member.id}')" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
+                            Delete
+                        </button>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function openStaffModal(staffId = null) {
+            editingStaffId = staffId;
+            const modal = document.getElementById('staffModal');
+            const title = document.getElementById('staffModalTitle');
+            const form = document.getElementById('staffForm');
+            
+            if (staffId) {
+                const member = staff.find(s => s.id === staffId);
+                title.textContent = 'Edit Staff Member';
+                
+                document.getElementById('staffName').value = member.name;
+                document.getElementById('staffRole').value = member.role;
+                document.getElementById('staffEmail').value = member.email || '';
+            } else {
+                title.textContent = 'Add Staff Member';
+                form.reset();
+            }
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeStaffModal() {
+            document.getElementById('staffModal').classList.add('hidden');
+            document.getElementById('staffModal').classList.remove('flex');
+            editingStaffId = null;
+        }
+
+        function handleStaffSubmit(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('staffName').value;
+            const role = document.getElementById('staffRole').value;
+            const email = document.getElementById('staffEmail').value;
+            
+            if (editingStaffId) {
+                const staffIndex = staff.findIndex(s => s.id === editingStaffId);
+                staff[staffIndex] = {
+                    ...staff[staffIndex],
+                    name,
+                    role,
+                    email,
+                    updatedAt: new Date().toISOString()
+                };
+                
+                logActivity(`Staff member ${name} updated`);
+                showNotification('Staff member updated successfully', 'success');
+            } else {
+                const newStaff = {
+                    id: generateId(),
+                    name,
+                    role,
+                    email,
+                    status: 'active',
+                    createdAt: new Date().toISOString()
+                };
+                
+                staff.push(newStaff);
+                logActivity(`New staff member ${name} added`);
+                showNotification('Staff member added successfully', 'success');
+            }
+            
+            saveData();
+            renderStaff();
+            closeStaffModal();
+        }
+
+        function editStaff(staffId) {
+            openStaffModal(staffId);
+        }
+
+        function deleteStaff(staffId) {
+            if (confirm('Are you sure you want to delete this staff member?')) {
+                const member = staff.find(s => s.id === staffId);
+                staff = staff.filter(s => s.id !== staffId);
+                
+                logActivity(`Staff member ${member.name} deleted`);
+                showNotification('Staff member deleted successfully', 'success');
+                
+                saveData();
+                renderStaff();
+            }
+        }
+
+        // User Management
+        function renderUsers() {
+            const usersList = document.getElementById('usersList');
+            usersList.innerHTML = '';
+            
+            users.forEach(user => {
+                const userItem = document.createElement('div');
+                userItem.className = 'flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg';
+                
+                userItem.innerHTML = `
+                    <div>
+                        <div class="text-sm font-medium text-gray-900 dark:text-white">${user.fullName || user.username}</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">${user.username} - ${user.role}</div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="editUser('${user.id}')" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 text-xs">
+                            Edit
+                        </button>
+                        <button onclick="deleteUser('${user.id}')" class="text-red-600 hover:text-red-800 dark:text-red-400 text-xs">
+                            Delete
+                        </button>
+                    </div>
+                `;
+                
+                usersList.appendChild(userItem);
+            });
+        }
+
+        function openUserModal(userId = null) {
+            // Check if user is admin
+            if (!currentUser || currentUser.role !== 'admin') {
+                showNotification('Only administrators can manage users', 'error');
+                return;
+            }
+            
+            editingUserId = userId;
+            const modal = document.getElementById('userModal');
+            const title = document.getElementById('userModalTitle');
+            const form = document.getElementById('userForm');
+            
+            if (userId) {
+                const user = users.find(u => u.id === userId);
+                title.textContent = 'Edit User';
+                
+                document.getElementById('userUsername').value = user.username;
+                document.getElementById('userPassword').value = ''; // Don't show password
+                document.getElementById('userRole').value = user.role;
+                document.getElementById('userFullName').value = user.fullName || '';
+            } else {
+                title.textContent = 'Add User';
+                form.reset();
+            }
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeUserModal() {
+            document.getElementById('userModal').classList.add('hidden');
+            document.getElementById('userModal').classList.remove('flex');
+            editingUserId = null;
+        }
+
+        function handleUserSubmit(e) {
+            e.preventDefault();
+            
+            // Check if user is admin
+            if (!currentUser || currentUser.role !== 'admin') {
+                showNotification('Only administrators can manage users', 'error');
+                return;
+            }
+            
+            const username = document.getElementById('userUsername').value;
+            const password = document.getElementById('userPassword').value;
+            const role = document.getElementById('userRole').value;
+            const fullName = document.getElementById('userFullName').value;
+            
+            // Check if username already exists (for new users or different user)
+            const existingUser = users.find(u => u.username === username && u.id !== editingUserId);
+            if (existingUser) {
+                showNotification('Username already exists', 'error');
+                return;
+            }
+            
+            if (editingUserId) {
+                const userIndex = users.findIndex(u => u.id === editingUserId);
+                users[userIndex] = {
+                    ...users[userIndex],
+                    username,
+                    role,
+                    fullName,
+                    updatedAt: new Date().toISOString()
+                };
+                
+                // Only update password if provided
+                if (password) {
+                    users[userIndex].password = CryptoJS.SHA256(password).toString();
+                }
+                
+                logActivity(`User ${username} updated by admin ${currentUser.username}`);
+                showNotification('User updated successfully', 'success');
+            } else {
+                const newUser = {
+                    id: generateId(),
+                    username,
+                    password: CryptoJS.SHA256(password).toString(),
+                    role,
+                    fullName,
+                    createdAt: new Date().toISOString()
+                };
+                
+                users.push(newUser);
+                logActivity(`New user ${username} added by admin ${currentUser.username}`);
+                showNotification('User added successfully', 'success');
+            }
+            
+            saveData();
+            renderUsers();
+            closeUserModal();
+        }
+
+        function editUser(userId) {
+            // Check if user is admin
+            if (!currentUser || currentUser.role !== 'admin') {
+                showNotification('Only administrators can manage users', 'error');
+                return;
+            }
+            openUserModal(userId);
+        }
+
+        function deleteUser(userId) {
+            // Check if user is admin
+            if (!currentUser || currentUser.role !== 'admin') {
+                showNotification('Only administrators can manage users', 'error');
+                return;
+            }
+            
+            if (users.length <= 1) {
+                showNotification('Cannot delete the last user', 'error');
+                return;
+            }
+            
+            // Prevent deleting yourself
+            if (currentUser.id === userId) {
+                showNotification('You cannot delete your own account', 'error');
+                return;
+            }
+            
+            if (confirm('Are you sure you want to delete this user?')) {
+                const user = users.find(u => u.id === userId);
+                users = users.filter(u => u.id !== userId);
+                
+                logActivity(`User ${user.username} deleted by admin ${currentUser.username}`);
+                showNotification('User deleted successfully', 'success');
+                
+                saveData();
+                renderUsers();
+            }
+        }
+
+        // Image Management
+        function renderImages() {
+            const grid = document.getElementById('imagesGrid');
+            grid.innerHTML = '';
+            
+            if (images.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No images uploaded</h3>
+                        <p class="text-gray-500 dark:text-gray-400">Upload medical images to get started</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            images.forEach(image => {
+                const imageCard = document.createElement('div');
+                imageCard.className = 'bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-shadow';
+                
+                imageCard.innerHTML = `
+                    <div class="aspect-w-16 aspect-h-9 bg-gray-200 dark:bg-gray-700 rounded-t-lg overflow-hidden">
+                        <img src="${image.data}" alt="${image.name}" class="w-full h-48 object-cover">
+                    </div>
+                    <div class="p-4">
+                        <h3 class="text-sm font-medium text-gray-900 dark:text-white truncate">${image.name}</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${image.type}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">${formatFileSize(image.size)}</p>
+                        <div class="mt-3 flex justify-between">
+                            <button onclick="viewImage('${image.id}')" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 text-sm">
+                                View
+                            </button>
+                            <button onclick="deleteImage('${image.id}')" class="text-red-600 hover:text-red-800 dark:text-red-400 text-sm">
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                grid.appendChild(imageCard);
+            });
+        }
+
+        function handleImageUpload(e) {
+            const files = Array.from(e.target.files);
+            
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const newImage = {
+                        id: generateId(),
+                        name: file.name,
+                        type: file.type,
+                        size: file.size,
+                        data: event.target.result,
+                        uploadedAt: new Date().toISOString(),
+                        uploadedBy: currentUser?.username
+                    };
+                    
+                    images.push(newImage);
+                    saveData();
+                    renderImages();
+                    
+                    logActivity(`Image ${file.name} uploaded`);
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            showNotification(`${files.length} image(s) uploaded successfully`, 'success');
+            e.target.value = '';
+        }
+
+        function viewImage(imageId) {
+            const image = images.find(img => img.id === imageId);
+            if (image) {
+                const newWindow = window.open('', '_blank');
+                newWindow.document.write(`
+                    <html>
+                        <head><title>${image.name}</title></head>
+                        <body style="margin:0;background:#000;display:flex;justify-content:center;align-items:center;min-height:100vh;">
+                            <img src="${image.data}" style="max-width:100%;max-height:100%;object-fit:contain;" alt="${image.name}">
+                        </body>
+                    </html>
+                `);
+            }
+        }
+
+        function deleteImage(imageId) {
+            if (confirm('Are you sure you want to delete this image?')) {
+                const image = images.find(img => img.id === imageId);
+                images = images.filter(img => img.id !== imageId);
+                
+                logActivity(`Image ${image.name} deleted`);
+                showNotification('Image deleted successfully', 'success');
+                
+                saveData();
+                renderImages();
+            }
+        }
+
+        // Activity Log
+        function renderActivity() {
+            const log = document.getElementById('activityLog');
+            log.innerHTML = '';
+            
+            if (activities.length === 0) {
+                log.innerHTML = `
+                    <div class="text-center py-8">
+                        <p class="text-gray-500 dark:text-gray-400">No activities recorded yet</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            activities.slice().reverse().forEach(activity => {
+                const activityItem = document.createElement('div');
+                activityItem.className = 'flex items-start space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg';
+                
+                activityItem.innerHTML = `
+                    <div class="flex-shrink-0">
+                        <div class="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm text-gray-900 dark:text-white">${activity.description}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">${formatDateTime(activity.timestamp)}</p>
+                    </div>
+                `;
+                
+                log.appendChild(activityItem);
+            });
+        }
+
+        function logActivity(description) {
+            const activity = {
+                id: generateId(),
+                description,
+                timestamp: new Date().toISOString(),
+                user: currentUser?.username || 'System'
+            };
+            
+            activities.push(activity);
+            saveData();
+        }
+
+        function clearActivityLog() {
+            if (confirm('Are you sure you want to clear the activity log?')) {
+                activities = [];
+                saveData();
+                renderActivity();
+                showNotification('Activity log cleared', 'success');
+            }
+        }
+
+        // Settings
+        function renderSettings() {
+            document.getElementById('labNameInput').value = settings.labName;
+            document.getElementById('teamNameInput').value = settings.teamName;
+            renderUsers();
+            
+            // Check if current user is admin for user management
+            const isAdmin = currentUser && currentUser.role === 'admin';
+            const addUserBtn = document.getElementById('addUserBtn');
+            const usersList = document.getElementById('usersList');
+            const adminOnlyMessage = document.getElementById('adminOnlyMessage');
+            
+            if (isAdmin) {
+                addUserBtn.classList.remove('hidden');
+                usersList.classList.remove('hidden');
+                adminOnlyMessage.classList.add('hidden');
+            } else {
+                addUserBtn.classList.add('hidden');
+                usersList.classList.add('hidden');
+                adminOnlyMessage.classList.remove('hidden');
+            }
+        }
+
+        function saveSettings() {
+            settings.labName = document.getElementById('labNameInput').value;
+            settings.teamName = document.getElementById('teamNameInput').value;
+            
+            updateTeamNameDisplay();
+            saveData();
+            
+            logActivity('Settings updated');
+            showNotification('Settings saved successfully', 'success');
+        }
+
+        // Import/Export Functions
+        function exportPatients() {
+            const data = {
+                patients,
+                exportDate: new Date().toISOString(),
+                version: '10.0'
+            };
+            
+            downloadJSON(data, 'patients-export.json');
+            logActivity('Patients data exported');
+            showNotification('Patients exported successfully', 'success');
+        }
+
+        function handlePatientsImport(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    
+                    if (data.patients) {
+                        // Merge with existing patients
+                        const importedPatients = migratePatientData(data.patients);
+                        patients = [...patients, ...importedPatients];
+                        
+                        saveData();
+                        renderPatients();
+                        
+                        logActivity(`${importedPatients.length} patients imported`);
+                        showNotification(`${importedPatients.length} patients imported successfully`, 'success');
+                    } else {
+                        showNotification('Invalid patient data format', 'error');
+                    }
+                } catch (error) {
+                    showNotification('Error importing patients data', 'error');
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        }
+
+        function exportAllData() {
+            const data = {
+                patients,
+                staff,
+                images: images.map(img => ({ ...img, data: img.data.substring(0, 100) + '...' })), // Truncate image data for export
+                activities,
+                users: users.map(u => ({ ...u, password: '***' })), // Don't export passwords
+                settings,
+                exportDate: new Date().toISOString(),
+                version: '10.0'
+            };
+            
+            downloadJSON(data, 'radiology-lab-backup.json');
+            logActivity('Complete data backup created');
+            showNotification('Data exported successfully', 'success');
+        }
+
+        function handleDataImport(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    
+                    if (confirm('This will replace all current data except users. Are you sure?')) {
+                        // Migrate and import data (but keep existing users)
+                        patients = migratePatientData(data.patients || []);
+                        staff = data.staff || [];
+                        activities = data.activities || [];
+                        settings = { ...settings, ...(data.settings || {}) };
+                        
+                        // Don't import images with truncated data
+                        if (data.images && data.images[0]?.data && !data.images[0].data.includes('...')) {
+                            images = data.images;
+                        }
+                        
+                        saveData();
+                        renderCurrentSection();
+                        updateTeamNameDisplay();
+                        
+                        logActivity('Complete data import performed');
+                        showNotification('Data imported successfully', 'success');
+                    }
+                } catch (error) {
+                    showNotification('Error importing data', 'error');
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        }
+
+        function createBackup() {
+            exportAllData();
+        }
+
+        // Utility Functions
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        function formatDateTime(timestamp) {
+            return new Date(timestamp).toLocaleString();
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function downloadJSON(data, filename) {
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification px-4 py-3 rounded-lg shadow-lg text-white ${
+                type === 'success' ? 'bg-green-500' :
+                type === 'error' ? 'bg-red-500' :
+                type === 'warning' ? 'bg-yellow-500' :
+                'bg-blue-500'
+            }`;
+            
+            notification.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('notifications').appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
+        // Service Worker Registration for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('data:application/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdpbnN0YWxsJywgZnVuY3Rpb24oZXZlbnQpIHsKICBjb25zb2xlLmxvZygnU2VydmljZSBXb3JrZXIgaW5zdGFsbGVkJyk7Cn0pOwoKc2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGZ1bmN0aW9uKGV2ZW50KSB7CiAgZXZlbnQucmVzcG9uZFdpdGgoZmV0Y2goZXZlbnQucmVxdWVzdCkpOwp9KTs=')
+                .then(function(registration) {
+                    console.log('ServiceWorker registration successful');
+                })
+                .catch(function(err) {
+                    console.log('ServiceWorker registration failed');
+                });
+            });
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'978dfec1746502ae',t:'MTc1NjgyNjQ2NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
